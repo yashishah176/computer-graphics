@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Dreamy Orb</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+html,body{margin:0;height:100%;background:#14112B;overflow:hidden}
+canvas{display:block}
+</style>
+</head>
+<body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(0x14112b, 0.03);
+const camera = new THREE.PerspectiveCamera(50, innerWidth / innerHeight, 0.1, 100);
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.setClearColor(0x14112b);
+document.body.appendChild(renderer.domElement);
+
+// Palette: lavender, aqua mint, peach, rose
+const pal = [0xB8A1FF, 0x7FFFD4, 0xFFB8A1, 0xFF9EC7].map(c => new THREE.Color(c));
+function palColor(t, out) {
+  const n = pal.length, x = ((t % 1) + 1) % 1 * n, i = Math.floor(x);
+  return out.copy(pal[i % n]).lerp(pal[(i + 1) % n], x - i);
+}
+
+// Lights
+scene.add(new THREE.AmbientLight(0x6a5acd, 0.5));
+const l1 = new THREE.PointLight(0xB8A1FF, 2, 30); l1.position.set(-6, 2, 4); scene.add(l1);
+const l2 = new THREE.PointLight(0xFFB8A1, 2, 30); l2.position.set(6, -1, 4); scene.add(l2);
+const orbLight = new THREE.PointLight(0xffffff, 1.5, 15); scene.add(orbLight);
+
+// Orb + glow
+const orbMat = new THREE.MeshPhysicalMaterial({
+  color: 0xB8A1FF, emissive: 0xB8A1FF, emissiveIntensity: 0.6,
+  roughness: 0.08, metalness: 0.1, clearcoat: 1, transparent: true, opacity: 0.88
+});
+const orb = new THREE.Mesh(new THREE.SphereGeometry(1.2, 64, 64), orbMat);
+const glowMat = new THREE.MeshBasicMaterial({
+  color: 0xB8A1FF, transparent: true, opacity: 0.18,
+  side: THREE.BackSide, blending: THREE.AdditiveBlending, depthWrite: false
+});
+const glow = new THREE.Mesh(new THREE.SphereGeometry(1.2, 32, 32), glowMat);
+glow.scale.setScalar(1.4);
+orb.add(glow);
+scene.add(orb);
+
+// 3 gyroscope rings
+const rings = [];
+for (let i = 0; i < 3; i++) {
+  const m = new THREE.MeshBasicMaterial({ color: pal[i] });
+  const r = new THREE.Mesh(new THREE.TorusGeometry(2 + i * 0.6, 0.025, 16, 160), m);
+  r.rotation.set(i * 1.0, i * 0.6, 0);
+  rings.push(r); scene.add(r);
+}
+
+// Floating crystal shards
+const shards = [];
+const shardGeo = new THREE.OctahedronGeometry(1);
+for (let i = 0; i < 30; i++) {
+  const c = pal[i % 4];
+  const m = new THREE.MeshStandardMaterial({
+    color: c, emissive: c, emissiveIntensity: 0.7,
+    transparent: true, opacity: 0.8, roughness: 0.2
+  });
+  const s = new THREE.Mesh(shardGeo, m);
+  s.scale.setScalar(0.05 + Math.random() * 0.1);
+  const r = 3.5 + Math.random() * 4, a = Math.random() * 6.28, h = (Math.random() - 0.5) * 6;
+  s.userData = { base: new THREE.Vector3(Math.cos(a) * r, h, Math.sin(a) * r), ph: Math.random() * 6.28 };
+  shards.push(s); scene.add(s);
+}
+
+// Glossy floor
+const floor = new THREE.Mesh(
+  new THREE.CircleGeometry(14, 64),
+  new THREE.MeshStandardMaterial({ color: 0x1d1840, roughness: 0.15, metalness: 0.6 })
+);
+floor.rotation.x = -Math.PI / 2; floor.position.y = -3.2; scene.add(floor);
+
+const col = new THREE.Color(), clock = new THREE.Clock();
+function loop() {
+  const t = clock.getElapsedTime();
+
+  // Position: orb floats, shards drift in a wave
+  orb.position.y = Math.sin(t * 0.6) * 0.3;
+  orbLight.position.copy(orb.position);
+  shards.forEach(s => {
+    const d = s.userData;
+    s.position.set(d.base.x, d.base.y + Math.sin(t * 0.5 + d.ph) * 0.6, d.base.z);
+    s.rotation.x = t * 0.4 + d.ph; s.rotation.y = t * 0.3 + d.ph;
+  });
+
+  // Scale: orb breathes 100% to 115%
+  const breathe = 1 + 0.075 + 0.075 * Math.sin(t * 1.2);
+  orb.scale.setScalar(breathe);
+
+  // Rotation + Scale: rings spin, expand and snap back
+  const pulse = Math.pow(Math.max(0, Math.sin(t * 0.63)), 4);
+  rings.forEach((r, i) => {
+    r.rotation.x += 0.004 * (i + 1);
+    r.rotation.y += 0.003 * (3 - i);
+    r.rotation.z += 0.002 * (i + 1);
+    r.scale.setScalar(1 + 0.2 * pulse);
+    r.position.y = orb.position.y;
+  });
+
+  // Material properties: color shift + glow pulse
+  palColor(t / 10, col);
+  orbMat.color.copy(col); orbMat.emissive.copy(col);
+  orbMat.emissiveIntensity = 0.5 + 0.4 * Math.sin(t * 1.2);
+  glowMat.color.copy(col); orbLight.color.copy(col);
+
+  // Camera: slow cinematic orbit with zoom in and out
+  const a = t * 0.15, rad = 9 + 1.5 * Math.sin(t * 0.2);
+  camera.position.set(Math.sin(a) * rad, 1.5 + Math.sin(t * 0.3), Math.cos(a) * rad);
+  camera.lookAt(0, 0, 0);
+
+  renderer.render(scene, camera);
+  requestAnimationFrame(loop);
+}
+loop();
+
+addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+</script>
+</body>
+</html>

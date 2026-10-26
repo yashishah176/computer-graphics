@@ -2,12 +2,12 @@
 
 Real-time graphics experiments built with **Three.js** and **raw WebGL shaders**, plus a fully procedural 3D scene generated with **Blender's Python API**.
 
-**Live gallery:** https://yashishah176.github.io/computer-graphics-portfolio/
+**Live gallery:** https://yashishah176.github.io/computer-graphics/
 
 | Project | Preview | Tech |
 |---|---|---|
-| **[Dreamy Orb](dreamy-orb/)** · [Live demo](https://yashishah176.github.io/computer-graphics-portfolio/dreamy-orb/) | <img src="assets/dreamy-orb.gif" width="320" alt="Dreamy Orb"> | Three.js, PBR materials, lights, fog |
-| **[Lumina](lumina/)** · [Live demo](https://yashishah176.github.io/computer-graphics-portfolio/lumina/) | <img src="assets/lumina.gif" width="320" alt="Lumina"> | WebGL, GLSL, raymarching, FBM noise |
+| **[Dreamy Orb](dreamy-orb/)** · [Live demo](https://yashishah176.github.io/computer-graphics/dreamy-orb/) | <img src="assets/dreamy-orb.gif" width="320" alt="Dreamy Orb"> | Three.js, PBR materials, lights, fog |
+| **[Lumina](lumina/)** · [Live demo](https://yashishah176.github.io/computer-graphics/lumina/) | <img src="assets/lumina.gif" width="320" alt="Lumina"> | WebGL, GLSL, raymarching, FBM noise |
 | **[Hot-Air Balloon Lift-Off](hot-air-balloon-blender/)** · [Video](hot-air-balloon-blender/animation.mp4) | <img src="assets/hot-air-balloon.gif" width="320" alt="Hot-air balloon"> | Blender, bpy/bmesh, keyframes, Cycles |
 
 ## Projects
